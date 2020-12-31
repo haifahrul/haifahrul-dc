@@ -1,0 +1,85 @@
+version: '3'
+services:
+  
+  web:
+    image: nginx:alpine
+    container_name: haifahrul_web
+    volumes:
+      - "./etc/nginx/default.conf:/etc/nginx/conf.d/default.conf:delegated"
+      - "./etc/ssl:/etc/ssl:delegated"
+      - "./web:/var/www/html:delegated"
+      - "./etc/nginx/default.template.conf:/etc/nginx/conf.d/default.template:delegated"
+    ports:
+      - "${WEB_PORT}:80"
+      - "${WEB_PORT_SSL}:443"
+    environment:
+      - NGINX_HOST=${NGINX_HOST}
+    command: /bin/sh -c "envsubst '$$NGINX_HOST' < /etc/nginx/conf.d/default.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
+    restart: always
+    depends_on:
+      - php7.4
+      - mysql
+    networks:
+      - network
+
+  php7.4:
+    image: nanoninja/php-fpm:7.4.10
+    container_name: haifahrul_php7.4
+    restart: always
+    volumes:
+      - "./etc/php/php.ini:/usr/local/etc/php/conf.d/php.ini:delegated"
+      - "./web:/var/www/html:delegated"
+    networks:
+      - network
+
+  composer:
+    image: "composer"
+    volumes:
+      - "./web/app:/app:delegated"
+    command: install
+    networks:
+      - network
+
+  mysql:
+    image: mysql:${MYSQL_VERSION}
+    container_name: haifahrul_mysql
+    restart: always
+    env_file:
+      - ".env"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    ports:
+      - "${MYSQL_PORT}:3306"
+    volumes:
+      - haifahrul_mysql:/var/lib/mysql:delegated
+    networks:
+      - network
+
+  pgsql:
+    image: postgres:${PG_VERSION}
+    container_name: haifahrul_pgsql
+    restart: always
+    environment:       
+      TZ: "Asia/Jakarta"  
+      POSTGRES_PASSWORD: "${PG_PASSWORD}"
+    ports:
+      - "${PG_PORT}:5432"
+    volumes:
+      - ./etc/postgresql/postgresql.conf:/etc/postgresql.conf:delegated
+      - haifahrul_pgsql:/var/lib/postgresql/data:delegated
+    networks:
+      - network
+
+# Docker Networks
+networks:
+  network:
+    driver: bridge
+
+# Docker Volumes
+volumes:
+  haifahrul_pgsql:
+    external: true
+  haifahrul_mysql:
+    external: true
