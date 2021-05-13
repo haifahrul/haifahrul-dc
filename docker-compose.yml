@@ -53,6 +53,7 @@ services:
     ports:
       - "${MYSQL_PORT}:3306"
     volumes:
+      - ./etc/mysql/conf.d:/etc/mysql/conf.d:delegated
       - haifahrul_mysql:/var/lib/mysql:delegated
     networks:
       - network
