@@ -19,8 +19,6 @@ services:
     depends_on:
       - php7.4
       - mysql
-    networks:
-      - network
 
   php7.4:
     image: nanoninja/php-fpm:7.4.10
@@ -29,16 +27,12 @@ services:
     volumes:
       - "./etc/php/php.ini:/usr/local/etc/php/conf.d/php.ini:delegated"
       - "./web:/var/www/html:delegated"
-    networks:
-      - network
 
   composer:
     image: "composer"
     volumes:
       - "./web/app:/app:delegated"
     command: install
-    networks:
-      - network
 
   mysql:
     image: mysql:${MYSQL_VERSION}
@@ -55,8 +49,6 @@ services:
     volumes:
       - ./etc/mysql/conf.d:/etc/mysql/conf.d:delegated
       - haifahrul_mysql:/var/lib/mysql:delegated
-    networks:
-      - network
 
   pgsql:
     image: postgres:${PG_VERSION}
@@ -70,13 +62,16 @@ services:
     volumes:
       - ./etc/postgresql/postgresql.conf:/etc/postgresql.conf:delegated
       - haifahrul_pgsql:/var/lib/postgresql/data:delegated
-    networks:
-      - network
 
 # Docker Networks
 networks:
-  network:
-    driver: bridge
+  default:
+    external: true
+    name: haifahrul-network
+
+# networks:
+#   network:
+#     driver: bridge
 
 # Docker Volumes
 volumes:
